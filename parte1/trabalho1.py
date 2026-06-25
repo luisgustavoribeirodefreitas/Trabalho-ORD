@@ -2,23 +2,23 @@
 # Trabalho 1 - Manipulação de Registros
 # Disciplina: Organização e Recuperação de Dados
 
-NOME_ARQUIVO = "filmes.dat"
+NOME_ARQ = "filmes.dat"
 TAM_CABECALHO = 4
 TAM_TAMANHO = 2
 MARCADOR_REMOVIDO = b"*"
 
 
-def abrir_arquivo():
+def abriArquivo():
     # Aula 3 - Criar e abrir arquivos / try-except.
     # Aqui o arquivo e aberto para leitura e escrita em modo binario, se ele ja existir, preseva o conteudo; 
     # mas se ainda nao existir é criado o arquivo e colocamos o cabecalho que o enunciado exige.
     try:
-        arq = open(NOME_ARQUIVO, "r+b")
+        arq = open(NOME_ARQ, "r+b")
         return arq
 
     except:
         try:
-            arq = open(NOME_ARQUIVO, "w+b")
+            arq = open(NOME_ARQ, "w+b")
             # O enunciado do trabalho pede 4 bytes com sinal no inicio do arquivo. O -1 nao sera
             # alterado nesta Parte 1, mas ja deixa o arquivo pronto para a LED da Parte 2.
             arq.write((-1).to_bytes(TAM_CABECALHO, signed=True))
@@ -31,7 +31,7 @@ def abrir_arquivo():
             return None
 
 
-def ler_registro(arq):
+def lerRegistro(arq):
     # Aula 4 - Registros com indicador de tamanho.
     # Professor, antes dos dados de cada filme existem 2 bytes informando o tamanho
     # do registro. Assim sabemos exatamente quantos bytes ler, mesmo que cada filme
@@ -56,14 +56,14 @@ def ler_registro(arq):
     return [offset, tamanho, dados]
 
 
-def registro_foi_removido(dados):
+def registroFoiRemovido(dados):
     # Aula 5 - Remocao logica.
     # Um asterisco no inicio dos dados avisa que aquele espaco ainda existe fisicamente,
     # mas o filme nao pode mais aparecer em buscas.
     return dados[0:1] == MARCADOR_REMOVIDO
 
 
-def transformar_filme_em_bytes(filme):
+def transformarFilmeEmBytes(filme):
     # Aula 3 - Arquivos binarios: encode transforma texto em bytes.
     # Aula 4 - Campos com delimitador: usamos | entre os 7 campos do filme.
     # Como o tamanho do registro ja informa onde ele termina, nao precisamos de um |
@@ -74,7 +74,7 @@ def transformar_filme_em_bytes(filme):
     return texto.encode()
 
 
-def transformar_bytes_em_filme(dados):
+def transformarBytesEmFilme(dados):
     # Aula 3 - decode transforma os bytes lidos de volta para texto.
     # Aula 4 - split pelo delimitador recupera os campos do registro.
     campos = dados.decode().split("|")
@@ -85,30 +85,30 @@ def transformar_bytes_em_filme(dados):
     return campos
 
 
-def buscar_registro_por_id(arq, id_filme):
+def buscarRegistroPorId(arq, id_filme):
     # Aula 6 - Busca sequencial.
     # Professor, como os registros tem tamanho variavel e nao existe indice, a forma
     # adequada e percorrer o arquivo registro por registro a partir do byte 4.
     arq.seek(TAM_CABECALHO)
-    registro = ler_registro(arq)
+    registro = lerRegistro(arq)
 
     while registro != None:
         offset = registro[0]
         tamanho = registro[1]
         dados = registro[2]
 
-        if not registro_foi_removido(dados):
-            filme = transformar_bytes_em_filme(dados)
+        if not registroFoiRemovido(dados):
+            filme = transformarBytesEmFilme(dados)
 
             if filme != None and filme[0] == id_filme:
                 return [offset, tamanho, dados]
 
-        registro = ler_registro(arq)
+        registro = lerRegistro(arq)
 
     return None
 
 
-def ler_numero_positivo(mensagem):
+def lerNumeroPositivo(mensagem):
     # O ID, o ano e a duracao sao lidos como texto primeiro para evitar que uma
     # entrada invalida interrompa o programa.
     while True:
@@ -122,7 +122,7 @@ def ler_numero_positivo(mensagem):
         print("Digite um numero inteiro maior que zero.")
 
 
-def ler_texto_sem_delimitador(mensagem):
+def lerTexto(mensagem):
     # Aula 4 - O delimitador nao pode aparecer dentro dos valores dos campos.
     while True:
         valor = input(mensagem).strip()
@@ -137,21 +137,21 @@ def ler_texto_sem_delimitador(mensagem):
             return valor
 
 
-def ler_dados_do_filme():
+def lerDadosDoFilme():
     print("\nInforme os dados do filme:")
 
-    id_filme = ler_numero_positivo("ID: ")
-    titulo = ler_texto_sem_delimitador("Titulo: ")
-    diretor = ler_texto_sem_delimitador("Diretor: ")
-    ano = ler_numero_positivo("Ano: ")
-    generos = ler_texto_sem_delimitador("Genero(s): ")
-    duracao = ler_numero_positivo("Duracao em minutos: ")
-    elenco = ler_texto_sem_delimitador("Elenco: ")
+    id_filme = lerNumeroPositivo("ID: ")
+    titulo = lerTexto("Titulo: ")
+    diretor = lerTexto("Diretor: ")
+    ano = lerNumeroPositivo("Ano: ")
+    generos = lerTexto("Genero(s): ")
+    duracao = lerNumeroPositivo("Duracao em minutos: ")
+    elenco = lerTexto("Elenco: ")
 
     return [id_filme, titulo, diretor, ano, generos, duracao, elenco]
 
 
-def exibir_filme(filme):
+def exibirFilme(filme):
     print("\nFilme encontrado")
     print("-" * 45)
     print("ID:      ", filme[0])
@@ -164,41 +164,41 @@ def exibir_filme(filme):
     print("-" * 45)
 
 
-def buscar_filme():
-    id_filme = ler_numero_positivo("\nInforme o ID do filme que deseja buscar: ")
-    arq = abrir_arquivo()
+def buscarFilme():
+    id_filme = lerNumeroPositivo("\nInforme o ID do filme que deseja buscar: ")
+    arq = abriArquivo()
 
     if arq == None:
         return
 
-    registro = buscar_registro_por_id(arq, id_filme)
+    registro = buscarRegistroPorId(arq, id_filme)
     arq.close()
 
     if registro == None:
         print("Erro: filme nao encontrado.")
 
     else:
-        filme = transformar_bytes_em_filme(registro[2])
-        exibir_filme(filme)
+        filme = transformarBytesEmFilme(registro[2])
+        exibirFilme(filme)
 
 
-def inserir_filme():
-    filme = ler_dados_do_filme()
-    arq = abrir_arquivo()
+def inserirFilme():
+    filme = lerDadosDoFilme()
+    arq = abriArquivo()
 
     if arq == None:
         return
 
     # O ID e chave primaria; antes de gravar, verificamos se ja existe um
     # registro ativo com o mesmo ID.
-    registro = buscar_registro_por_id(arq, filme[0])
+    registro = buscarRegistroPorId(arq, filme[0])
 
     if registro != None:
         print("Erro: ja existe um filme ativo com esse ID.")
         arq.close()
         return
 
-    dados = transformar_filme_em_bytes(filme)
+    dados = transformarFilmeEmBytes(filme)
     tamanho = len(dados)
 
     # O enunciado reserva 2 bytes sem sinal para o tamanho, portanto o maior
@@ -218,14 +218,14 @@ def inserir_filme():
     print("Filme inserido com sucesso.")
 
 
-def remover_filme():
-    id_filme = ler_numero_positivo("\nInforme o ID do filme que deseja remover: ")
-    arq = abrir_arquivo()
+def removerFilme():
+    id_filme = lerNumeroPositivo("\nInforme o ID do filme que deseja remover: ")
+    arq = abriArquivo()
 
     if arq == None:
         return
 
-    registro = buscar_registro_por_id(arq, id_filme)
+    registro = buscarRegistroPorId(arq, id_filme)
 
     if registro == None:
         print("Erro: filme nao encontrado.")
@@ -243,7 +243,7 @@ def remover_filme():
     print("Filme removido logicamente com sucesso.")
 
 
-def mostrar_menu():
+def mostrarMenu():
     print("\n" + "=" * 45)
     print("TRABALHO 1 - MANIPULACAO DE REGISTROS")
     print("=" * 45)
@@ -256,7 +256,7 @@ def mostrar_menu():
 def main():
     # Primeiro garantimos que o arquivo exista. Depois cada operacao abre e fecha
     # o arquivo por conta propria, seguindo o tratamento de abertura da Aula 3.
-    arq = abrir_arquivo()
+    arq = abriArquivo()
 
     if arq == None:
         return
@@ -266,17 +266,17 @@ def main():
     opcao = ""
 
     while opcao != "0":
-        mostrar_menu()
+        mostrarMenu()
         opcao = input("Escolha uma opcao: ").strip()
 
         if opcao == "1":
-            buscar_filme()
+            buscarFilme()
 
         elif opcao == "2":
-            inserir_filme()
+            inserirFilme()
 
         elif opcao == "3":
-            remover_filme()
+            removerFilme()
 
         elif opcao == "0":
             print("Programa encerrado.")
