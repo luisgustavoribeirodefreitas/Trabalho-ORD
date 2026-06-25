@@ -1,0 +1,173 @@
+GUIA DAS AULAS E RASTREABILIDADE DOS REQUISITOS
+
+Este arquivo foi preparado para facilitar a explicacao do codigo durante a
+correcao. As referencias abaixo usam os titulos das secoes presentes nos PDFs
+das aulas, para que seja possivel localizar o conteudo rapidamente.
+
+======================================================================
+A. CONTEUDOS DAS AULAS UTILIZADOS
+======================================================================
+
+1. Aula 3 - "Criar e abrir arquivos" e "Fechamento de arquivos"
+   Onde aparece no codigo:
+   - abrir_arquivo()
+   - arq.close() ao final de cada operacao
+
+   Como foi usado:
+   O programa usa try-except para tentar abrir filmes.dat com r+b. Quando o
+   arquivo ainda nao existe, ele e criado com w+b. O arquivo sempre e fechado
+   ao fim da operacao.
+
+2. Aula 3 - "Leitura em modo binario", "Escrita em modo binario" e
+   "Arquivos binarios em Python"
+   Onde aparece no codigo:
+   - arq.read(...), arq.write(...), arq.seek(...)
+   - .encode(), .decode(), .to_bytes() e int.from_bytes()
+
+   Como foi usado:
+   O arquivo armazena somente bytes. Os textos dos filmes sao codificados antes
+   de gravar e decodificados depois de ler. Tamanhos, cabecalho e ponteiros sao
+   convertidos entre inteiro e bytes.
+
+3. Aula 4 - "Metodo 3 - Campos com delimitador"
+   Onde aparece no codigo:
+   - transformar_filme_em_bytes()
+   - transformar_bytes_em_filme()
+   - ler_texto_sem_delimitador()
+
+   Como foi usado:
+   Os sete campos do filme sao separados por |. A entrada bloqueia o uso de |
+   dentro dos campos, pois o delimitador nao pode fazer parte do valor gravado.
+
+4. Aula 4 - "Metodo 3 - Registros com indicador de tamanho"
+   Onde aparece no codigo:
+   - ler_registro()
+   - inserir_filme()
+
+   Como foi usado:
+   Antes de cada registro sao gravados 2 bytes contendo seu tamanho. Na leitura,
+   esses 2 bytes informam quantos bytes devem ser lidos para recuperar o filme
+   completo e encontrar o inicio do proximo registro.
+
+5. Aula 5 - "Remocao de registro de tamanho fixo ou variavel"
+   Onde aparece no codigo:
+   - registro_foi_removido()
+   - remover_filme() da Parte 1
+
+   Como foi usado:
+   A remocao e logica: o primeiro byte dos dados recebe *. O registro permanece
+   fisicamente no arquivo, mas deixa de ser valido para buscas.
+
+6. Aula 5 - "LED (Lista de Espacos Disponiveis)" e
+   "Criacao e manutencao da LED"
+   Onde aparece no codigo da Parte 2:
+   - ler_cabecalho(), escrever_cabecalho()
+   - ler_proximo_da_led(), escrever_proximo_da_led()
+   - inserir_na_led_ordenada()
+   - remover_filme()
+
+   Como foi usado:
+   O cabecalho aponta para o primeiro espaco removido. Cada espaco removido
+   guarda, dentro do proprio registro, o ponteiro de 4 bytes para o proximo
+   elemento da LED.
+
+7. Aula 5 - "Melhor ajuste - best fit"
+   Onde aparece no codigo da Parte 2:
+   - inserir_na_led_ordenada()
+   - encontrar_melhor_espaco()
+   - inserir_filme()
+
+   Como foi usado:
+   A LED e mantida em ordem crescente de tamanho. Por isso, o primeiro espaco
+   encontrado cujo tamanho e suficiente para o novo registro e o menor espaco
+   adequado, que e exatamente a estrategia Best Fit.
+
+8. Aula 6 - "Busca sequencial", "Acesso direto" e
+   "Registro de cabecalho (Header)"
+   Onde aparece no codigo:
+   - buscar_registro_por_id()
+   - uso de offset em ler_tamanho_do_espaco() e ler_proximo_da_led()
+   - cabecalho inicial de 4 bytes
+
+   Como foi usado:
+   Como nao existe indice e os registros possuem tamanho variavel, a busca por
+   ID e sequencial. Os byte-offsets guardados na LED permitem retornar direto
+   ao inicio de cada espaco removido com seek().
+
+======================================================================
+B. PONTO QUE NAO ESTA EXPLICITO NOS SLIDES
+======================================================================
+
+signed=True
+
+Os slides mostram a conversao basica com to_bytes(n) e int.from_bytes(bytes),
+mas nao detalham o parametro signed=True. Ele foi usado somente onde o
+proprio enunciado exige "inteiro com sinal de 4 bytes":
+
+- cabecalho;
+- ponteiros da LED;
+- valor -1 para indicar LED vazia.
+
+Sem signed=True, o Python nao permite converter -1 para bytes. Logo, trata-se
+de uma necessidade tecnica direta do enunciado, e nao de uma biblioteca ou
+estrutura externa ao conteudo estudado.
+
+======================================================================
+C. REQUISITOS DO ENUNCIADO E COMO FORAM RESOLVIDOS
+======================================================================
+
+TRABALHO 1
+
+[OK] Cabecalho de 4 bytes inteiro com sinal
+     Resolvido na criacao do arquivo, dentro de abrir_arquivo().
+
+[OK] Tamanho de cada registro em 2 bytes sem sinal
+     Resolvido em inserir_filme() e ler_registro().
+
+[OK] ID como chave primaria
+     Resolvido pela verificacao em buscar_registro_por_id() antes da insercao.
+
+[OK] Buscar um filme por ID e exibir todos os dados
+     Resolvido por buscar_filme(), buscar_registro_por_id() e exibir_filme().
+
+[OK] Mensagem quando o registro nao existe
+     Resolvido em buscar_filme() e remover_filme().
+
+[OK] Inserir novo filme com todos os campos solicitados
+     Resolvido em ler_dados_do_filme() e inserir_filme().
+
+[OK] Remocao logica
+     Resolvido em remover_filme(): apenas o primeiro byte recebe *.
+
+TRABALHO 2
+
+[OK] LED armazenada no proprio arquivo
+     Resolvido porque o ponteiro de proximo no fica dentro do registro removido.
+
+[OK] Cabecalho armazena offset do primeiro elemento da LED
+     Resolvido por ler_cabecalho() e escrever_cabecalho().
+
+[OK] Ponteiros de 4 bytes com sinal
+     Resolvido por ler_proximo_da_led() e escrever_proximo_da_led().
+
+[OK] Espacos removidos entram na LED
+     Resolvido em remover_filme() e inserir_na_led_ordenada().
+
+[OK] LED ordenada por tamanho crescente
+     Resolvido em inserir_na_led_ordenada().
+
+[OK] Reutilizacao por Best Fit
+     Resolvido em encontrar_melhor_espaco() e inserir_filme().
+
+[OK] Novo registro no fim quando nao ha espaco adequado
+     Resolvido no bloco espaco == None de inserir_filme().
+
+[OK] Sobras podem ser fragmentacao interna
+     Resolvido em gravar_no_espaco_reutilizado(). O tamanho original do espaco
+     e preservado e a sobra recebe espacos em branco.
+
+[OK] Impressao da LED
+     Resolvido em imprimir_led().
+
+[OK] Estatisticas: quantidade, bytes livres, maior e menor espaco
+     Resolvido em imprimir_led().
